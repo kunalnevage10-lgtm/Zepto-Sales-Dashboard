@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import re
 from pathlib import Path
 
 # ==========================================
@@ -451,37 +452,83 @@ with st.sidebar:
 # ==========================================
 filtered_df = df_raw.copy()
 
-# Apply Category filter
-if selected_categories:
-    filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
+# Step 1: Apply .astype(str) and .str.strip() to the product name column before filtering
+filtered_df["name"] = filtered_df["name"].astype(str).str.strip()
+filtered_df["Category"] = filtered_df["Category"].astype(str).str.strip()
+
+search_term = search_query.strip() if search_query else ""
+
+# Step 2 & 3: Ensure search condition uses .str.contains(search_term, case=False, na=False)
+# and harmonize chained filters so they work together seamlessly without conflicting
+if search_term:
+    # Search condition on clean product name
+    search_condition = filtered_df["name"].astype(str).str.strip().str.contains(search_term, case=False, na=False)
+    
+    # In case search_term has unescaped regex characters like parentheses, ensure literal matching
+    if not search_condition.any() and any(char in search_term for char in "()[]{}*+?^$\\"):
+        search_condition = filtered_df["name"].astype(str).str.strip().str.contains(re.escape(search_term), case=False, na=False)
+        
+    search_subset = filtered_df[search_condition]
+    
+    if not search_subset.empty:
+        # Harmonize Category Filter: refine if matching products exist in selected categories
+        if selected_categories and len(selected_categories) < len(all_categories):
+            cat_matches = search_subset["Category"].isin(selected_categories)
+            if cat_matches.any():
+                search_subset = search_subset[cat_matches]
+
+        # Harmonize Stock Availability Filter: refine if matches exist in chosen stock state
+        if selected_stock == "In Stock Only":
+            stock_matches = ~search_subset["outOfStock"]
+            if stock_matches.any():
+                search_subset = search_subset[stock_matches]
+        elif selected_stock == "Out of Stock Only":
+            stock_matches = search_subset["outOfStock"]
+            if stock_matches.any():
+                search_subset = search_subset[stock_matches]
+
+        # Harmonize Price Range Filter: refine if matches exist in chosen price range
+        price_matches = (
+            (search_subset["mrp_inr"] >= price_range[0]) & 
+            (search_subset["mrp_inr"] <= price_range[1])
+        )
+        if price_matches.any():
+            search_subset = search_subset[price_matches]
+
+        # Harmonize Discount Range Filter: refine if matches exist in chosen discount range
+        disc_matches = (
+            (search_subset["discountPercent"] >= discount_range[0]) & 
+            (search_subset["discountPercent"] <= discount_range[1])
+        )
+        if disc_matches.any():
+            search_subset = search_subset[disc_matches]
+
+        filtered_df = search_subset
+    else:
+        # No products in the entire catalog match search_term
+        filtered_df = search_subset
+
 else:
-    # If nothing selected, empty dataframe
-    filtered_df = filtered_df.iloc[0:0]
+    # When no search term is entered, apply all sidebar filters normally
+    if selected_categories and len(selected_categories) < len(all_categories):
+        filtered_df = filtered_df[filtered_df["Category"].isin(selected_categories)]
+    elif not selected_categories:
+        # If user cleared the multiselect, default to all categories instead of returning empty
+        pass
 
-# Apply Stock Availability filter
-if selected_stock == "In Stock Only":
-    filtered_df = filtered_df[~filtered_df["outOfStock"]]
-elif selected_stock == "Out of Stock Only":
-    filtered_df = filtered_df[filtered_df["outOfStock"]]
+    if selected_stock == "In Stock Only":
+        filtered_df = filtered_df[~filtered_df["outOfStock"]]
+    elif selected_stock == "Out of Stock Only":
+        filtered_df = filtered_df[filtered_df["outOfStock"]]
 
-# Apply Price Range filter
-filtered_df = filtered_df[
-    (filtered_df["mrp_inr"] >= price_range[0]) & 
-    (filtered_df["mrp_inr"] <= price_range[1])
-]
-
-# Apply Discount Percentage filter
-filtered_df = filtered_df[
-    (filtered_df["discountPercent"] >= discount_range[0]) & 
-    (filtered_df["discountPercent"] <= discount_range[1])
-]
-
-# Apply Text Search filter
-if search_query.strip():
-    q = search_query.strip().lower()
     filtered_df = filtered_df[
-        filtered_df["name"].str.lower().str.contains(q) | 
-        filtered_df["Category"].str.lower().str.contains(q)
+        (filtered_df["mrp_inr"] >= price_range[0]) & 
+        (filtered_df["mrp_inr"] <= price_range[1])
+    ]
+
+    filtered_df = filtered_df[
+        (filtered_df["discountPercent"] >= discount_range[0]) & 
+        (filtered_df["discountPercent"] <= discount_range[1])
     ]
 
 
