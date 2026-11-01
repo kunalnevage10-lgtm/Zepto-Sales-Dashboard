@@ -9,6 +9,15 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
+<p align="center">
+  <a href="https://zepto-analytics-kunal.streamlit.app/" target="_blank">
+    <img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit" />
+  </a>
+</p>
+
+> 🚀 **Live Production Dashboard:** [https://zepto-analytics-kunal.streamlit.app/](https://zepto-analytics-kunal.streamlit.app/)  
+> *Explore catalog pricing distributions, category volumes, discount spreads, and warehouse stock health live in your browser.*
+
 An enterprise-grade, dark-mode Business Intelligence (BI) and Data Visualization dashboard engineered with **Streamlit**, **Pandas**, and **Plotly**. Built around **Zepto's** signature brand identity (Deep Midnight Purple and Vibrant Magenta/Pink), this application delivers actionable quick-commerce intelligence—from real-time catalog pricing and discount spread analysis to warehouse inventory stock health.
 
 ---
@@ -156,15 +165,23 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Usage Instructions
+## 🚀 Usage & Quick Access
 
-### 1. Launch the Streamlit Dashboard
+### 🌐 1. Live Cloud Access (No Installation Required)
+The quickest way to interact with the dashboard is via the production deployment on Streamlit Community Cloud:  
+👉 **[Launch Live Zepto Dashboard](https://zepto-analytics-kunal.streamlit.app/)**
+
+---
+
+### 💻 2. Local Execution
+
+#### Step 1: Launch the Streamlit Server
 Run the following command in your terminal from the project root:
 ```bash
 streamlit run app.py
 ```
 
-### 2. Access the Application
+#### Step 2: Access the Application
 Once the local development server starts, open your web browser and navigate to:
 ```text
 http://localhost:8501

@@ -38,3 +38,10 @@ venv.bak/
 .DS_Store
 Thumbs.db
 *.log
+
+# Personal & Portfolio Files
+*.docx
+*.png
+*.jpg
+*.jpeg
+create_resume.py
